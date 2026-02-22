@@ -11,6 +11,7 @@ namespace ComplyFlow.API.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Group> Groups => Set<Group>();
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
+        public DbSet<SubTask> SubTasks => Set<SubTask>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -18,16 +19,17 @@ namespace ComplyFlow.API.Data
 
             // Seed Groups
             modelBuilder.Entity<Group>().HasData(
-                new Group { Id = 1, Name = "Uyum" },
-                new Group { Id = 2, Name = "KVKK" },
-                new Group { Id = 3, Name = "Hukuk" }
+                new Group { Id = 1, Name = "Uyum Ekibi" },
+                new Group { Id = 2, Name = "KVKK Kurulu" },
+                new Group { Id = 3, Name = "Hukuk Departmanı" }
             );
 
             // Seed Users
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, FullName = "Ahmet Yılmaz", Role = "Admin" },
-                new User { Id = 2, FullName = "Ayşe Demir", Role = "User" },
-                new User { Id = 3, FullName = "Mehmet Kaya", Role = "User" }
+                new User { Id = 1, FullName = "Ahmet Yılmaz", Role = "Avukat" },
+                new User { Id = 2, FullName = "Ayşe Demir", Role = "Uyum Uzmanı" },
+                new User { Id = 3, FullName = "Mehmet Kaya", Role = "Stajyer" },
+                new User { Id = 4, FullName = "Zeynep Çelik", Role = "Yönetici" }
             );
 
             // Seed Tasks

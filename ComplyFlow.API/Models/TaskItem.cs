@@ -9,6 +9,7 @@ namespace ComplyFlow.API.Models
         public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string Priority { get; set; } = string.Empty;
+        public string TaskType { get; set; } = string.Empty;
         public DateTime? DueDate { get; set; }
         
         public int? AssignedToUserId { get; set; }
@@ -16,5 +17,7 @@ namespace ComplyFlow.API.Models
 
         public int? AssignedToGroupId { get; set; }
         public Group? AssignedToGroup { get; set; }
+
+        public ICollection<SubTask> SubTasks { get; set; } = new List<SubTask>();
     }
 }

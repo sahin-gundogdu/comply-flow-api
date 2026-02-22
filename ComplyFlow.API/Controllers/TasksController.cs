@@ -1,4 +1,6 @@
 using ComplyFlow.API.Data;
+using ComplyFlow.API.DTOs;
+using ComplyFlow.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +26,44 @@ namespace ComplyFlow.API.Controllers
                 .ToListAsync();
 
             return Ok(tasks);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var taskItem = new TaskItem
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                TaskType = dto.TaskType,
+                Priority = dto.Priority,
+                Status = dto.Status ?? "Open",
+                DueDate = dto.DueDate,
+                AssignedToUserId = dto.AssignedToUserId,
+                AssignedToGroupId = dto.AssignedToGroupId
+            };
+
+            if (dto.SubTasks != null && dto.SubTasks.Any())
+            {
+                foreach (var subDto in dto.SubTasks)
+                {
+                    taskItem.SubTasks.Add(new SubTask
+                    {
+                        Title = subDto.Title,
+                        AssignedToUserId = subDto.AssignedToUserId
+                    });
+                }
+            }
+
+            _context.TaskItems.Add(taskItem);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTasks), new { id = taskItem.Id }, taskItem);
         }
     }
 }
