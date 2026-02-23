@@ -65,5 +65,48 @@ namespace ComplyFlow.API.Controllers
 
             return CreatedAtAction(nameof(GetTasks), new { id = taskItem.Id }, taskItem);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var task = await _context.TaskItems.FindAsync(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            task.Title = dto.Title;
+            task.Description = dto.Description;
+            task.Status = dto.Status;
+            task.Priority = dto.Priority;
+            task.TaskType = dto.TaskType;
+            task.DueDate = dto.DueDate;
+            task.AssignedToUserId = dto.AssignedToUserId;
+            task.AssignedToGroupId = dto.AssignedToGroupId;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTask(int id)
+        {
+            var task = await _context.TaskItems.FindAsync(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            _context.TaskItems.Remove(task);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
