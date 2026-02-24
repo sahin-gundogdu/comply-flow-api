@@ -22,5 +22,6 @@ namespace ComplyFlow.API.DTOs
         [Required]
         public string Title { get; set; } = string.Empty;
         public int? AssignedToUserId { get; set; }
+        public int? AssignedToGroupId { get; set; }
     }
 }

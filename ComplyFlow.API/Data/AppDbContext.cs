@@ -41,7 +41,7 @@ namespace ComplyFlow.API.Data
                     Description = "Yeni tedarikçi sözleşmesinin incelenmesi.", 
                     Status = "Beklemede", 
                     Priority = "Yüksek", 
-                    DueDate = DateTime.Now.AddDays(3), 
+                    DueDate = new DateTime(2024, 1, 4), 
                     AssignedToUserId = 1,
                     AssignedToGroupId = 3
                 },
@@ -52,7 +52,7 @@ namespace ComplyFlow.API.Data
                     Description = "Web sitesindeki aydınlatma metninin güncellenmesi.", 
                     Status = "Devam Ediyor", 
                     Priority = "Orta", 
-                    DueDate = DateTime.Now.AddDays(7), 
+                    DueDate = new DateTime(2024, 1, 8), 
                     AssignedToUserId = 2,
                     AssignedToGroupId = 2
                 },
@@ -63,7 +63,7 @@ namespace ComplyFlow.API.Data
                     Description = "Personel için yıllık uyum eğitimi sunumunun hazırlanması.", 
                     Status = "Tamamlandı", 
                     Priority = "Düşük", 
-                    DueDate = DateTime.Now.AddDays(-2), 
+                    DueDate = new DateTime(2024, 1, 1).AddDays(-2), 
                     AssignedToGroupId = 1
                 }
             );

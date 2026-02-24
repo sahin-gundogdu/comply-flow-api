@@ -8,6 +8,9 @@ namespace ComplyFlow.API.Models
         public int? AssignedToUserId { get; set; }
         public User? AssignedToUser { get; set; }
 
+        public int? AssignedToGroupId { get; set; }
+        public Group? AssignedToGroup { get; set; }
+
         public int TaskItemId { get; set; }
         public TaskItem? TaskItem { get; set; }
     }

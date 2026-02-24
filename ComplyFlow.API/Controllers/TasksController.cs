@@ -23,9 +23,81 @@ namespace ComplyFlow.API.Controllers
             var tasks = await _context.TaskItems
                 .Include(t => t.AssignedToUser)
                 .Include(t => t.AssignedToGroup)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToUser)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToGroup)
                 .ToListAsync();
 
-            return Ok(tasks);
+            var taskDtos = tasks.Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                TaskType = t.TaskType,
+                DueDate = t.DueDate,
+                AssignedToUserId = t.AssignedToUserId,
+                AssignedToUserName = t.AssignedToUser?.FullName,
+                AssignedToGroupId = t.AssignedToGroupId,
+                AssignedToGroupName = t.AssignedToGroup?.Name,
+                SubTasks = t.SubTasks.Select(s => new SubTaskDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    AssignedToUserId = s.AssignedToUserId,
+                    AssignedToUserName = s.AssignedToUser?.FullName,
+                    AssignedToGroupId = s.AssignedToGroupId,
+                    AssignedToGroupName = s.AssignedToGroup?.Name
+                }).ToList()
+            }).ToList();
+
+            return Ok(taskDtos);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTaskById(int id)
+        {
+            var task = await _context.TaskItems
+                .Include(t => t.AssignedToUser)
+                .Include(t => t.AssignedToGroup)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToUser)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToGroup)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            var taskDto = new TaskDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                Status = task.Status,
+                Priority = task.Priority,
+                TaskType = task.TaskType,
+                DueDate = task.DueDate,
+                AssignedToUserId = task.AssignedToUserId,
+                AssignedToUserName = task.AssignedToUser?.FullName,
+                AssignedToGroupId = task.AssignedToGroupId,
+                AssignedToGroupName = task.AssignedToGroup?.Name,
+                SubTasks = task.SubTasks.Select(s => new SubTaskDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    AssignedToUserId = s.AssignedToUserId,
+                    AssignedToUserName = s.AssignedToUser?.FullName,
+                    AssignedToGroupId = s.AssignedToGroupId,
+                    AssignedToGroupName = s.AssignedToGroup?.Name
+                }).ToList()
+            };
+
+            return Ok(taskDto);
         }
 
         [HttpPost]
@@ -55,7 +127,8 @@ namespace ComplyFlow.API.Controllers
                     taskItem.SubTasks.Add(new SubTask
                     {
                         Title = subDto.Title,
-                        AssignedToUserId = subDto.AssignedToUserId
+                        AssignedToUserId = subDto.AssignedToUserId,
+                        AssignedToGroupId = subDto.AssignedToGroupId
                     });
                 }
             }
@@ -63,7 +136,27 @@ namespace ComplyFlow.API.Controllers
             _context.TaskItems.Add(taskItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTasks), new { id = taskItem.Id }, taskItem);
+            var taskDto = new TaskDto
+            {
+                Id = taskItem.Id,
+                Title = taskItem.Title,
+                Description = taskItem.Description,
+                Status = taskItem.Status,
+                Priority = taskItem.Priority,
+                TaskType = taskItem.TaskType,
+                DueDate = taskItem.DueDate,
+                AssignedToUserId = taskItem.AssignedToUserId,
+                AssignedToGroupId = taskItem.AssignedToGroupId,
+                SubTasks = taskItem.SubTasks.Select(s => new SubTaskDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    AssignedToUserId = s.AssignedToUserId,
+                    AssignedToGroupId = s.AssignedToGroupId
+                }).ToList()
+            };
+
+            return CreatedAtAction(nameof(GetTaskById), new { id = taskItem.Id }, taskDto);
         }
 
         [HttpPut("{id}")]
