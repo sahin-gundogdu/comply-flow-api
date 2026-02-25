@@ -46,6 +46,8 @@ namespace ComplyFlow.API.Controllers
                 {
                     Id = s.Id,
                     Title = s.Title,
+                    Description = s.Description,
+                    DueDate = s.DueDate,
                     AssignedToUserId = s.AssignedToUserId,
                     AssignedToUserName = s.AssignedToUser?.FullName,
                     AssignedToGroupId = s.AssignedToGroupId,
@@ -90,6 +92,8 @@ namespace ComplyFlow.API.Controllers
                 {
                     Id = s.Id,
                     Title = s.Title,
+                    Description = s.Description,
+                    DueDate = s.DueDate,
                     AssignedToUserId = s.AssignedToUserId,
                     AssignedToUserName = s.AssignedToUser?.FullName,
                     AssignedToGroupId = s.AssignedToGroupId,
@@ -106,6 +110,17 @@ namespace ComplyFlow.API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (dto.DueDate.HasValue && dto.SubTasks != null)
+            {
+                foreach (var subTask in dto.SubTasks)
+                {
+                    if (subTask.DueDate.HasValue && subTask.DueDate.Value.Date > dto.DueDate.Value.Date)
+                    {
+                        return BadRequest("Alt görevin bitiş tarihi, ana görevin bitiş tarihinden daha ileri bir tarih olamaz.");
+                    }
+                }
             }
 
             var taskItem = new TaskItem
@@ -127,14 +142,23 @@ namespace ComplyFlow.API.Controllers
                     taskItem.SubTasks.Add(new SubTask
                     {
                         Title = subDto.Title,
+                        Description = subDto.Description,
+                        DueDate = subDto.DueDate,
                         AssignedToUserId = subDto.AssignedToUserId,
                         AssignedToGroupId = subDto.AssignedToGroupId
                     });
                 }
             }
 
-            _context.TaskItems.Add(taskItem);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.TaskItems.Add(taskItem);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
 
             var taskDto = new TaskDto
             {
@@ -151,6 +175,8 @@ namespace ComplyFlow.API.Controllers
                 {
                     Id = s.Id,
                     Title = s.Title,
+                    Description = s.Description,
+                    DueDate = s.DueDate,
                     AssignedToUserId = s.AssignedToUserId,
                     AssignedToGroupId = s.AssignedToGroupId
                 }).ToList()
@@ -167,10 +193,24 @@ namespace ComplyFlow.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var task = await _context.TaskItems.FindAsync(id);
+            var task = await _context.TaskItems
+                .Include(t => t.SubTasks)
+                .FirstOrDefaultAsync(t => t.Id == id);
+                
             if (task == null)
             {
                 return NotFound();
+            }
+
+            if (dto.DueDate.HasValue && task.SubTasks != null)
+            {
+                foreach (var subTask in task.SubTasks)
+                {
+                    if (subTask.DueDate.HasValue && subTask.DueDate.Value.Date > dto.DueDate.Value.Date)
+                    {
+                        return BadRequest("Alt görevin bitiş tarihi, ana görevin bitiş tarihinden daha ileri bir tarih olamaz.");
+                    }
+                }
             }
 
             task.Title = dto.Title;
@@ -182,7 +222,14 @@ namespace ComplyFlow.API.Controllers
             task.AssignedToUserId = dto.AssignedToUserId;
             task.AssignedToGroupId = dto.AssignedToGroupId;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
 
             return NoContent();
         }
