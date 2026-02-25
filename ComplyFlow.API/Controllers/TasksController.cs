@@ -58,6 +58,67 @@ namespace ComplyFlow.API.Controllers
             return Ok(taskDtos);
         }
 
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardStats()
+        {
+            var totalTasks = await _context.TaskItems.CountAsync();
+            var completedTasks = await _context.TaskItems.CountAsync(t => t.Status == "Tamamlandı");
+            var pendingTasks = await _context.TaskItems.CountAsync(t => t.Status == "Beklemede" || t.Status == "Yeni");
+            var inProgressTasks = await _context.TaskItems.CountAsync(t => t.Status == "İşlemde" || t.Status == "Devam Ediyor");
+            
+            var now = DateTime.Now;
+            var overdueTasks = await _context.TaskItems.CountAsync(t => t.DueDate < now && t.Status != "Tamamlandı");
+
+            var recentTasksData = await _context.TaskItems
+                .Include(t => t.AssignedToUser)
+                .Include(t => t.AssignedToGroup)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToUser)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToGroup)
+                .OrderByDescending(t => t.Id)
+                .Take(5)
+                .ToListAsync();
+
+            var recentTaskDtos = recentTasksData.Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                TaskType = t.TaskType,
+                DueDate = t.DueDate,
+                AssignedToUserId = t.AssignedToUserId,
+                AssignedToUserName = t.AssignedToUser?.FullName,
+                AssignedToGroupId = t.AssignedToGroupId,
+                AssignedToGroupName = t.AssignedToGroup?.Name,
+                SubTasks = t.SubTasks.Select(s => new SubTaskDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Description = s.Description,
+                    DueDate = s.DueDate,
+                    AssignedToUserId = s.AssignedToUserId,
+                    AssignedToUserName = s.AssignedToUser?.FullName,
+                    AssignedToGroupId = s.AssignedToGroupId,
+                    AssignedToGroupName = s.AssignedToGroup?.Name
+                }).ToList()
+            }).ToList();
+
+            var summary = new DashboardSummaryDto
+            {
+                TotalTasks = totalTasks,
+                CompletedTasks = completedTasks,
+                PendingTasks = pendingTasks,
+                InProgressTasks = inProgressTasks,
+                OverdueTasks = overdueTasks,
+                RecentTasks = recentTaskDtos
+            };
+
+            return Ok(summary);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskById(int id)
         {
