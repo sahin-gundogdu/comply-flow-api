@@ -26,4 +26,10 @@ namespace ComplyFlow.API.DTOs
         public int? AssignedToUserId { get; set; }
         public int? AssignedToGroupId { get; set; }
     }
+
+    public class UpdateTaskStatusDto
+    {
+        [Required]
+        public string Status { get; set; } = string.Empty;
+    }
 }

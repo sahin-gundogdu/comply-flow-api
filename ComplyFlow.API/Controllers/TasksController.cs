@@ -5,11 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace ComplyFlow.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     [EnableRateLimiting("GlobalLimit")]
     public class TasksController : ControllerBase
     {
@@ -30,6 +33,54 @@ namespace ComplyFlow.API.Controllers
                     .ThenInclude(s => s.AssignedToUser)
                 .Include(t => t.SubTasks)
                     .ThenInclude(s => s.AssignedToGroup)
+                .ToListAsync();
+
+            var taskDtos = tasks.Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                TaskType = t.TaskType,
+                DueDate = t.DueDate,
+                AssignedToUserId = t.AssignedToUserId,
+                AssignedToUserName = t.AssignedToUser?.FullName,
+                AssignedToGroupId = t.AssignedToGroupId,
+                AssignedToGroupName = t.AssignedToGroup?.Name,
+                SubTasks = t.SubTasks.Select(s => new SubTaskDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Description = s.Description,
+                    DueDate = s.DueDate,
+                    AssignedToUserId = s.AssignedToUserId,
+                    AssignedToUserName = s.AssignedToUser?.FullName,
+                    AssignedToGroupId = s.AssignedToGroupId,
+                    AssignedToGroupName = s.AssignedToGroup?.Name
+                }).ToList()
+            }).ToList();
+
+            return Ok(taskDtos);
+        }
+
+        [HttpGet("my-tasks")]
+        public async Task<IActionResult> GetMyTasks()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized(new { message = "Kullanıcı kimliği doğrulanamadı." });
+            }
+
+            var tasks = await _context.TaskItems
+                .Include(t => t.AssignedToUser)
+                .Include(t => t.AssignedToGroup)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToUser)
+                .Include(t => t.SubTasks)
+                    .ThenInclude(s => s.AssignedToGroup)
+                .Where(t => t.AssignedToUserId == userId || t.SubTasks.Any(s => s.AssignedToUserId == userId))
                 .ToListAsync();
 
             var taskDtos = tasks.Select(t => new TaskDto
@@ -285,6 +336,34 @@ namespace ComplyFlow.API.Controllers
             task.DueDate = dto.DueDate;
             task.AssignedToUserId = dto.AssignedToUserId;
             task.AssignedToGroupId = dto.AssignedToGroupId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
+
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] UpdateTaskStatusDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var task = await _context.TaskItems.FindAsync(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            task.Status = dto.Status;
 
             try
             {

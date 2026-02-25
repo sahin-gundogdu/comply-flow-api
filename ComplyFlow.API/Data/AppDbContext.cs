@@ -9,6 +9,7 @@ namespace ComplyFlow.API.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<User> Users => Set<User>();
+        public DbSet<Role> Roles => Set<Role>();
         public DbSet<Group> Groups => Set<Group>();
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<SubTask> SubTasks => Set<SubTask>();
@@ -16,6 +17,12 @@ namespace ComplyFlow.API.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Seed Roles
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = "Admin" },
+                new Role { Id = 2, Name = "User" }
+            );
 
             // Seed Groups
             modelBuilder.Entity<Group>().HasData(
@@ -26,10 +33,11 @@ namespace ComplyFlow.API.Data
 
             // Seed Users
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, FullName = "Ahmet Yılmaz", Role = "Avukat" },
-                new User { Id = 2, FullName = "Ayşe Demir", Role = "Uyum Uzmanı" },
-                new User { Id = 3, FullName = "Mehmet Kaya", Role = "Stajyer" },
-                new User { Id = 4, FullName = "Zeynep Çelik", Role = "Yönetici" }
+                new User { Id = 1, Username = "ahmet.yilmaz", FullName = "Ahmet Yılmaz", Role = "Avukat", PasswordHash = "" },
+                new User { Id = 2, Username = "ayse.demir", FullName = "Ayşe Demir", Role = "Uyum Uzmanı", PasswordHash = "" },
+                new User { Id = 3, Username = "mehmet.kaya", FullName = "Mehmet Kaya", Role = "Stajyer", PasswordHash = "" },
+                new User { Id = 4, Username = "zeynep.celik", FullName = "Zeynep Çelik", Role = "Yönetici", PasswordHash = "" },
+                new User { Id = 99, Username = "administrator", FullName = "Master Admin", Role = "Admin", PasswordHash = "$2a$11$JUUUdxfnetLG.uui3oh6/uSO14gjvzGp2Mv2Y8bLKg6fRD7Ll7UDC" }
             );
 
             // Seed Tasks
