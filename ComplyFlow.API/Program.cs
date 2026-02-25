@@ -1,5 +1,8 @@
 using ComplyFlow.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using ComplyFlow.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,13 +18,25 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("AllowNextJsFrontend",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:3000")
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         });
+});
+
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("GlobalLimit", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 100;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
 });
 
 var app = builder.Build();
@@ -34,9 +49,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Register Global Exception Handler
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowNextJsFrontend");
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 

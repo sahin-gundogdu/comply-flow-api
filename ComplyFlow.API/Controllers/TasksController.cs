@@ -4,10 +4,13 @@ using ComplyFlow.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.RateLimiting;
+
 namespace ComplyFlow.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting("GlobalLimit")]
     public class TasksController : ControllerBase
     {
         private readonly AppDbContext _context;
