@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ComplyFlow.API.DTOs
 {
     public class UserDto
@@ -7,6 +9,8 @@ namespace ComplyFlow.API.DTOs
         public string Role { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
     }
+
+
 
     public class CreateUserDto
     {

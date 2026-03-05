@@ -23,11 +23,11 @@ namespace ComplyFlow.API.Middlewares
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unhandled exception occurred during the request.");
-                await HandleExceptionAsync(context);
+                await HandleExceptionAsync(context, ex);
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context)
+        private static Task HandleExceptionAsync(HttpContext context, Exception ex)
         {
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -35,7 +35,8 @@ namespace ComplyFlow.API.Middlewares
             var response = new
             {
                 statusCode = context.Response.StatusCode,
-                message = "An unexpected internal server error occurred. Please try again later."
+                message = ex.Message,
+                details = ex.ToString()
             };
 
             return context.Response.WriteAsync(JsonSerializer.Serialize(response));

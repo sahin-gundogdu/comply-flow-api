@@ -21,6 +21,7 @@ namespace ComplyFlow.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetGroups()
         {
             var groups = await _context.Groups

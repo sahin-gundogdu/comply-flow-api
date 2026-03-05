@@ -15,7 +15,7 @@ namespace ComplyFlow.API.Controllers
     {
         private readonly AppDbContext _context;
 
-        public UsersController(AppDbContext context)
+        public UsersController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
         }
